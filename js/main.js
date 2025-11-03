@@ -1,40 +1,39 @@
-// Denna fil ska innehålla din lösning till uppgiften (moment 5).
-
 "use strict";
 
-/*  Delar till ej obligatorisk funktionalitet, som kan ge poäng för högre betyg
-*   Radera rader för funktioner du vill visa på webbsidan. */
-document.getElementById("player").style.display = "none";      // Radera denna rad för att visa musikspelare
-document.getElementById("shownumrows").style.display = "none"; // Radera denna rad för att visa antal träffar
-
-/* Här under börjar du skriva din JavaScript-kod */
 // ===============================
 // main.js - DT084G - Projekt
 // ===============================
 
-// Kommentarera bort eller ta bort raderna som döljer HTML-elementen i början av filen i mallen.
+// Kommentera bort dessa två rader för att visa extra funktionalitet:
+ // document.getElementById("player").style.display = "none";
+ // document.getElementById("shownumrows").style.display = "none";
 
 // Bas-URL till Sveriges Radios öppna API
 const BASE_URL = "https://api.sr.se/api/v2";
 
-// Vänta tills sidan laddats
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
-    // Ladda kanaler vid start
     await loadChannels();
 
-    // Händelselyssnare för antal-kanaler (3)
-    const numRowsInput = document.getElementById("numrows");
-    if (numRowsInput) {
-        numRowsInput.addEventListener("change", loadChannels);
+    // Hämta senast vald kanal från localStorage
+    const lastChannel = localStorage.getItem("lastChannelId");
+    const lastChannelName = localStorage.getItem("lastChannelName");
+    const lastChannelColor = localStorage.getItem("lastChannelColor");
+
+    if (lastChannel) {
+        loadSchedule(lastChannel, lastChannelName, lastChannelColor);
+    } else {
+        showNowPlayingOverview();
     }
 
-    // Händelselyssnare för radio-spelare (4)
+    // Händelselyssnare för antal-kanaler
+    const numRowsInput = document.getElementById("numrows");
+    if (numRowsInput) numRowsInput.addEventListener("change", loadChannels);
+
+    // Händelselyssnare för radio-spelare
     const playBtn = document.getElementById("playbutton");
-    if (playBtn) {
-        playBtn.addEventListener("click", playSelectedChannel);
-    }
+    if (playBtn) playBtn.addEventListener("click", playSelectedChannel);
 }
 
 // ===============================
@@ -47,20 +46,17 @@ async function loadChannels() {
         const res = await fetch(url);
         const data = await res.json();
 
-        // Bygg vänster meny (1)
         renderChannelMenu(data.channels);
-
-        // Bygg dropdown-lista (4)
         renderChannelSelect(data.channels);
     } catch (err) {
         console.error("Fel vid hämtning av kanaler:", err);
+        document.getElementById("info").innerHTML = "<p>Kunde inte ladda kanaler just nu.</p>";
     }
 }
 
 function renderChannelMenu(channels) {
     const list = document.getElementById("mainnavlist");
     if (!list) return;
-
     list.innerHTML = "";
 
     channels.forEach(ch => {
@@ -68,14 +64,22 @@ function renderChannelMenu(channels) {
         li.textContent = ch.name;
         li.title = ch.tagline || "Ingen information tillgänglig";
         li.style.cursor = "pointer";
-        li.addEventListener("click", () => loadSchedule(ch.id, ch.name, ch.color));
-
-        // Gör länkarna lite mer visuellt tilltalande (valfritt)
         li.style.padding = "4px";
         li.style.listStyle = "none";
         li.style.color = ch.color || "#000";
-        li.addEventListener("mouseover", () => li.style.fontWeight = "bold");
-        li.addEventListener("mouseout", () => li.style.fontWeight = "normal");
+
+        li.addEventListener("click", () => {
+            loadSchedule(ch.id, ch.name, ch.color);
+
+            // Spara senast valda kanal
+            localStorage.setItem("lastChannelId", ch.id);
+            localStorage.setItem("lastChannelName", ch.name);
+            localStorage.setItem("lastChannelColor", ch.color);
+
+            // Markera vald kanal
+            document.querySelectorAll("#mainnavlist li").forEach(el => el.style.fontWeight = "normal");
+            li.style.fontWeight = "bold";
+        });
 
         list.appendChild(li);
     });
@@ -95,6 +99,7 @@ async function loadSchedule(channelId, channelName, color) {
         renderSchedule(upcoming, channelName, color);
     } catch (err) {
         console.error("Fel vid hämtning av tablå:", err);
+        document.getElementById("info").innerHTML = "<p>Kunde inte hämta tablån.</p>";
     }
 }
 
@@ -119,10 +124,8 @@ function renderSchedule(programs, channelName, color) {
 
     programs.forEach(p => {
         const article = document.createElement("article");
-
         const start = new Date(parseInt(p.starttimeutc.replace("/Date(", "").replace(")/", "")));
         const end = new Date(parseInt(p.endtimeutc.replace("/Date(", "").replace(")/", "")));
-
         const startTime = start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         const endTime = end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -133,13 +136,12 @@ function renderSchedule(programs, channelName, color) {
             <p>${p.description || "Ingen beskrivning tillgänglig."}</p>
             <hr>
         `;
-
         info.appendChild(article);
     });
 }
 
 // ===============================
-// 3. Radio-spelare (valfri del 4)
+// 3. Radio-spelare
 // ===============================
 function renderChannelSelect(channels) {
     const select = document.getElementById("playchannel");
@@ -170,4 +172,35 @@ function playSelectedChannel() {
             <source src="${url}" type="audio/mpeg">
         </audio>
     `;
+}
+
+// ===============================
+// 4. Startvy - visa "Just nu"
+// ===============================
+async function showNowPlayingOverview() {
+    const info = document.getElementById("info");
+    info.innerHTML = "<h2>Välkommen till tablån för Sveriges Radio</h2><p>Laddar aktuella sändningar...</p>";
+
+    try {
+        const res = await fetch(`${BASE_URL}/channels?format=json&size=5`);
+        const data = await res.json();
+
+        info.innerHTML = "<h2>Just nu i Sveriges Radio</h2>";
+
+        data.channels.forEach(ch => {
+            if (ch.liveaudio && ch.liveaudio.url) {
+                info.innerHTML += `
+                    <article>
+                        <h3 style="color:${ch.color}">${ch.name}</h3>
+                        <p>${ch.tagline || ""}</p>
+                        <audio controls style="width:100%;">
+                            <source src="${ch.liveaudio.url}" type="audio/mpeg">
+                        </audio>
+                    </article>
+                `;
+            }
+        });
+    } catch (err) {
+        info.innerHTML = "<p>Kunde inte ladda nuvarande sändningar.</p>";
+    }
 }
