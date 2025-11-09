@@ -6,7 +6,7 @@ Detta projekt är en webbapplikation som använder **Sveriges Radios öppna API*
 
 Funktionalitet
 - Lista av Sveriges Radios kanaler i vänstermenyn med information via `title`-attribut.
-- Klick på kanal visar **dagens tablå** (endast kommande program).
+- Klick på kanal visar **dagens tablå**.
 - Möjlighet att välja hur många kanaler som ska visas i listan.
 - Inbyggd **radio-spelare** för att spela live-ström (MP3) från vald kanal.
 - **LocalStorage** sparar senast vald kanal.
@@ -21,12 +21,6 @@ Tekniker
 Demo
 (https://armo2501.github.io/Moment-5/)
 
-Klona projektet
-```bash
-git clone https://github.com/armo2501/Moment-5.git
-
-
-
 Om utvecklaren
 
 Jag heter Areej Moshinesh och är student på Mittuniversitetet. Denna laboration har hjälpt mig att förbättra mina färdigheter i front-end programmering.
@@ -35,4 +29,11 @@ Kontakt:
 
 Email: armo2501@student.miun.se
 GitHub: https://github.com/armo2501
+
+Klona projektet
+```bash
+git clone https://github.com/armo2501/Moment-5.git
+
+
+
 
