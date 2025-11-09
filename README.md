@@ -1,6 +1,6 @@
 # Labbgrund till Moment 5 i kursen DT084G, Introduktion till programmering i JavaScript
 Använd dessa filer som grund till din laboration.
-# 🎧 Moment 5 – Sveriges Radio (DT084G)
+# Moment 5 – Sveriges Radio (DT084G)
 
 Detta projekt är en webbapplikation som använder **Sveriges Radios öppna API** för att visa kanaler, programtablåer och spela upp live-radio direkt i webbläsaren.
 
